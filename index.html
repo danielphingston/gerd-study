@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GERD Study Forms</title>
+<meta name="description" content="Data entry for the GERD nutrition counseling study: Modified GerdQ, 24-hour diet recall with trigger checklist, and dietary counseling impact survey at Day 1, 30 and 60.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#f0f2f5; --border:#dde1e7; --text:#1b1f24; --muted:#5f6b7a;
+  --accent:#1f6feb; --accent-soft:#e7f0fe; --accent-text:#ffffff;
+  --a:#b4560f; --a-soft:#fdf0e4; --b:#0e7a5a; --b-soft:#e3f5ee;
+  --ok:#1a7f37; --warn:#9a6700; --danger:#cf222e; --danger-soft:#fdecee;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --surface:#171b21; --surface-2:#1f242c; --border:#2e353f; --text:#e6e9ee; --muted:#9aa5b4;
+    --accent:#4d94ff; --accent-soft:#1a2a44; --accent-text:#0b1220;
+    --a:#f0a35e; --a-soft:#3a2615; --b:#4cc79a; --b-soft:#143127;
+    --ok:#4ac26b; --warn:#d4a72c; --danger:#ff7b72; --danger-soft:#3b1a1c;
+    --shadow:none; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --surface:#171b21; --surface-2:#1f242c; --border:#2e353f; --text:#e6e9ee; --muted:#9aa5b4;
+  --accent:#4d94ff; --accent-soft:#1a2a44; --accent-text:#0b1220;
+  --a:#f0a35e; --a-soft:#3a2615; --b:#4cc79a; --b-soft:#143127;
+  --ok:#4ac26b; --warn:#d4a72c; --danger:#ff7b72; --danger-soft:#3b1a1c;
+  --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.25}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.top-in{max-width:1320px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{flex:1 1 280px;min-width:0}
+.brand h1{font-size:17px}
+.brand p{margin:0;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.save-state{font-size:12.5px;color:var(--muted);min-width:64px;text-align:right}
+
+.btn{border:1px solid var(--border);background:var(--surface);padding:7px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--danger)}
+.btn.danger:hover{background:var(--danger-soft)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn:focus-visible,.opt:focus-visible,.tab:focus-visible,.p-item:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* layout */
+.wrap{max-width:1320px;margin:0 auto;padding:16px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.side{position:sticky;top:76px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;max-height:calc(100vh - 92px)}
+.side-head{padding:12px;border-bottom:1px solid var(--border);display:grid;gap:8px}
+.add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-row .btn{justify-content:center}
+.add-a{border-color:var(--a);color:var(--a)} .add-a:hover{background:var(--a-soft)}
+.add-b{border-color:var(--b);color:var(--b)} .add-b:hover{background:var(--b-soft)}
+.filters{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:8px}
+.filters button{flex:1;border:0;background:transparent;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--muted)}
+.filters button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+.search{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.p-list{overflow:auto;padding:6px;flex:1}
+.p-item{width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:8px 10px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center}
+.p-item:hover{background:var(--surface-2)}
+.p-item.on{background:var(--accent-soft);border-color:var(--accent)}
+.p-code{font-weight:700;font-variant-numeric:tabular-nums}
+.p-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:13.5px}
+.p-prog{grid-column:1/-1;display:flex;gap:10px;font-size:11px;color:var(--muted)}
+.p-prog span{display:inline-flex;align-items:center;gap:3px}
+.dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--muted);display:inline-block}
+.dot.f{background:var(--ok);border-color:var(--ok)}
+.empty-list{padding:20px 12px;text-align:center;color:var(--muted);font-size:13.5px}
+.side-foot{border-top:1px solid var(--border);padding:10px 12px;font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.count-row{display:flex;justify-content:space-between}
+
+.badge{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;letter-spacing:.02em}
+.badge.A{background:var(--a-soft);color:var(--a)}
+.badge.B{background:var(--b-soft);color:var(--b)}
+
+/* main */
+.main{display:grid;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.card-h h2{font-size:16px}
+.card-h .grow{flex:1}
+.card-b{padding:16px}
+.annex-tag{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.instr{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.fld{display:grid;gap:4px}
+.fld label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.fld.wide{grid-column:1/-1}
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=tel],select,textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);min-height:36px}
+textarea{resize:vertical;min-height:38px}
+
+/* visit tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tab{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;display:grid;gap:2px}
+.tab:hover{background:var(--surface-2)}
+.tab.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.tab b{font-size:15px}
+.tab .small{display:flex;gap:10px;flex-wrap:wrap}
+.visit-date{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.visit-date .fld{min-width:200px}
+
+/* questions */
+.q{padding:12px 0;border-top:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:center}
+.q:first-of-type{border-top:0;padding-top:0}
+.q-text{font-size:14.5px}
+.q-num{font-weight:700;color:var(--muted);margin-right:4px}
+.opts{display:grid;gap:6px}
+.opts.g4{grid-template-columns:repeat(4,88px)}
+.opts.g5{grid-template-columns:repeat(5,64px)}
+.opt{border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 4px;cursor:pointer;display:grid;line-height:1.2;text-align:center;min-height:44px;align-content:center}
+.opt:hover{border-color:var(--accent)}
+.opt .l{font-weight:600;font-size:13.5px}
+.opt .s{font-size:11px;color:var(--muted)}
+.opt.on{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.opt.on .s{color:inherit;opacity:.85}
+.sec-title{font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 4px}
+.sec-title:first-child{margin-top:0}
+
+.total{display:flex;align-items:baseline;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface-2);border-radius:0 0 12px 12px;flex-wrap:wrap}
+.total .lbl{font-weight:600}
+.total .val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.total .rng{color:var(--muted);font-size:13px}
+.total .inc{color:var(--warn);font-size:13px}
+.total .grow{flex:1}
+
+/* diet recall */
+.meals{display:grid;gap:10px}
+.meal{display:grid;grid-template-columns:150px minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:start;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.meal-h{display:grid;gap:4px}
+.meal-h b{font-size:14px}
+.meal .fld label{font-size:11.5px}
+.meal-head{display:grid;grid-template-columns:150px minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px;padding:0 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.meal .mlabel{display:none}
+.trig{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:6px}
+.trig label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+.trig label:hover{border-color:var(--accent)}
+.trig input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex:none}
+.trig label.on{border-color:var(--accent);background:var(--accent-soft)}
+.trig .d{display:block;font-size:12.5px;color:var(--muted)}
+.sub-h{font-size:14.5px;font-weight:700;margin:20px 0 2px}
+.note{padding:10px 12px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:13px;margin-bottom:12px;border-left:3px solid var(--warn)}
+
+/* summary */
+.tbl-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+th{background:var(--surface-2);font-size:12px;color:var(--muted);font-weight:700;position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+.means{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.mcard{border:1px solid var(--border);border-radius:10px;padding:12px}
+.mcard h3{font-size:14px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.mcard table td,.mcard table th{padding:5px 8px}
+
+.welcome{padding:32px 24px;text-align:center}
+.welcome h2{font-size:20px;margin-bottom:8px}
+.welcome p{max-width:560px;margin:0 auto 16px;color:var(--muted)}
+.welcome .add-row{max-width:420px;margin:0 auto}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;text-align:left;margin-top:24px}
+.steps div{border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13.5px}
+.steps b{display:block;margin-bottom:2px}
+
+.view-switch{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:9px}
+.view-switch button{border:0;background:transparent;padding:5px 12px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:14px}
+.view-switch button.on{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--shadow)}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1}
+
+@media (max-width:1060px){
+  .q{grid-template-columns:1fr}
+  .opts.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .opts.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .meal,.meal-head{grid-template-columns:1fr 1fr}
+  .meal-head{display:none}
+  .meal .mlabel{display:block}
+  .meal-h{grid-column:1/-1;grid-template-columns:auto 1fr;align-items:center;gap:10px}
+  .meal .food{grid-column:1/-1}
+}
+@media (max-width:860px){
+  .top{position:static}
+  .wrap{grid-template-columns:1fr}
+  .side{position:static;max-height:none}
+  .p-list{max-height:260px}
+  .brand p{white-space:normal}
+}
+@media (max-width:520px){
+  .wrap{padding:12px 16px}
+  .tabs{gap:6px}
+  .tab{padding:8px}
+  .tab .small{font-size:11px;gap:6px}
+  .meal{grid-template-columns:1fr}
+  .opt .s{display:none}
+  .actions .btn .txt{display:none}
+}
+@media print{
+  .top,.side,.tabs,.no-print{display:none!important}
+  .wrap{display:block;padding:0}
+  .card{box-shadow:none;break-inside:avoid;margin-bottom:12px}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <h1>GERD Study · Data Entry</h1>
+      <p>Homoeopathy alone vs. homoeopathy + nutrition counseling · Day 1 · Day 30 · Day 60</p>
+    </div>
+    <div class="view-switch" role="tablist" aria-label="View">
+      <button id="vEntry" class="on" type="button">Entry</button>
+      <button id="vSummary" type="button">Summary</button>
+    </div>
+    <div class="actions">
+      <span class="save-state" id="saveState" aria-live="polite"></span>
+      <button class="btn primary" id="exportXlsx" type="button" title="Download all data as an Excel workbook">⬇ <span class="txt">Export Excel</span></button>
+      <button class="btn" id="backupBtn" type="button" title="Download all data as a JSON file (backup or move to another device)">💾 <span class="txt">Export JSON</span></button>
+      <button class="btn" id="restoreBtn" type="button" title="Load a JSON file exported from this form; participants are merged, newer edits win">📂 <span class="txt">Import JSON</span></button>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside class="side" aria-label="Participants">
+    <div class="side-head">
+      <div class="add-row">
+        <button class="btn add-a" type="button" data-add="A">+ Control (A)</button>
+        <button class="btn add-b" type="button" data-add="B">+ Intervention (B)</button>
+      </div>
+      <div class="filters" id="filters">
+        <button type="button" data-f="all" class="on">All</button>
+        <button type="button" data-f="A">Control</button>
+        <button type="button" data-f="B">Intervention</button>
+      </div>
+      <input class="search" id="search" type="search" placeholder="Search ID, name or OP no.">
+    </div>
+    <div class="p-list" id="pList"></div>
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===================== Study definition (from the synopsis annexures) ===================== */
+const TARGET = 30; // participants per group
+const GROUPS = {
+  A:{name:'Control', long:'Group A · Control', desc:'Homoeopathy + standard printed diet sheet'},
+  B:{name:'Intervention', long:'Group B · Intervention', desc:'Homoeopathy + structured nutrition counseling (MNT)'}
+};
+const DAYS = [{k:'d1',label:'Day 1',n:1,sub:'Baseline'},{k:'d30',label:'Day 30',n:30,sub:'First follow-up'},{k:'d60',label:'Day 60',n:60,sub:'Final assessment'}];
+
+const GERDQ = [
+  'How often did you have a burning feeling behind your breastbone (Heartburn)?',
+  'How often did you have stomach contents moving upwards into your throat/mouth (Regurgitation)?',
+  "How often did you experience difficulty getting a good night's sleep because of heartburn or regurgitation?",
+  'How often did you need to take additional over-the-counter medication (like antacids/gels) besides study remedies?'
+];
+const GERDQ_SHORT = ['Heartburn','Regurgitation','Sleep disturbance','OTC medication'];
+const GERDQ_OPTS = [{v:0,l:'0 days',s:'0 pts'},{v:1,l:'1 day',s:'1 pt'},{v:2,l:'2–3 days',s:'2 pts'},{v:3,l:'4–7 days',s:'3 pts'}];
+
+const MEALS = [['breakfast','Breakfast'],['midmorning','Mid-Morning'],['lunch','Lunch'],['evening','Evening Snack'],['dinner','Dinner'],['latenight','Late Night']];
+
+const TRIGGERS = [
+  {t:'High Fat / Fried Items', d:'Heavy oils, butter, deep-fried'},
+  {t:'Methylxanthines / Caffeine', d:'Coffee, chocolate, strong tea'},
+  {t:'Citrus & Acidic Matrix', d:'Tomatoes, vinegar, lemon'},
+  {t:'Alliums & Concentrated Spices', d:'Raw onions, garlic, heavy chili'},
+  {t:'Carbonated Mediums', d:'Soda, sparkling water'},
+  {t:'Carminatives', d:'Peppermint, spearmint'},
+  {t:'Nocturnal Feeding Sync', d:'Any caloric intake within 3 hours of sleep'}
+];
+
+const SURVEY = [
+  {sec:'Section A: Nutritional Literacy', items:[
+    'I can easily identify which specific foods and cooking methods trigger my upper gastrointestinal symptoms.',
+    'I know exactly how many hours before sleeping I should stop eating to prevent nighttime reflux.',
+    'I understand how modifying my diet works biologically alongside my homeopathic treatment to heal my stomach.']},
+  {sec:'Section B: Dietary Self-Efficacy', items:[
+    'I feel confident that I can choose GERD-safe options when eating out at restaurants or social gatherings.',
+    'I find it easy to prepare satisfying meals without relying on heavy spices, fats, or acidic ingredients.',
+    'When I experience a symptom flare-up, I know how to adjust my immediate food intake to manage it.']},
+  {sec:'Section C: Perceived Value', items:[
+    'The dietary advice provided by the practitioner was clear, practical, and easy to integrate into my daily routine.']}
+];
+const SURVEY_FLAT = SURVEY.flatMap(s => s.items);
+const LIKERT = [{v:1,l:'1',s:'SD',t:'Strongly disagree'},{v:2,l:'2',s:'D',t:'Disagree'},{v:3,l:'3',s:'N',t:'Neutral'},{v:4,l:'4',s:'A',t:'Agree'},{v:5,l:'5',s:'SA',t:'Strongly agree'}];
+
+const CLINICS = ['Samraksha Homoeopathic Clinic, Aroor, Alappuzha','Samraksha Homoeopathic Medical Centre, Ponnurunni, Vytilla, Ernakulam'];
+
+/* ===================== State & storage ===================== */
+const KEY = 'gerd-study-data-v1';
+const UI_KEY = 'gerd-study-ui-v1';
+let db = {version:1, participants:[]};
+let ui = {sel:null, day:'d1', filter:'all', q:'', view:'entry'};
+
+function blankVisit(){
+  const recall = {};
+  MEALS.forEach(([k]) => recall[k] = {time:'',food:'',portion:'',notes:''});
+  return {date:'', gerdq:[null,null,null,null], recall, triggers:TRIGGERS.map(()=>false), survey:SURVEY_FLAT.map(()=>null), remarks:''};
+}
+function blankParticipant(group){
+  const v = {}; DAYS.forEach(d => v[d.k] = blankVisit());
+  return {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), code:nextCode(group), group,
+    name:'', age:'', sex:'', opNo:'', phone:'', clinic:'', enrolDate:'', remedy:'', notes:'',
+    visits:v, createdAt:Date.now(), updatedAt:Date.now()};
+}
+function normalise(p){ // fill any missing fields (older backups)
+  const base = blankParticipant(p.group === 'B' ? 'B' : 'A');
+  const out = Object.assign({}, base, p);
+  out.visits = {};
+  DAYS.forEach(d => {
+    const bv = blankVisit(), sv = (p.visits && p.visits[d.k]) || {};
+    const v = Object.assign(bv, sv);
+    v.gerdq = GERDQ.map((_,i) => numOrNull(sv.gerdq && sv.gerdq[i]));
+    v.survey = SURVEY_FLAT.map((_,i) => numOrNull(sv.survey && sv.survey[i]));
+    v.triggers = TRIGGERS.map((_,i) => !!(sv.triggers && sv.triggers[i]));
+    v.recall = {}; MEALS.forEach(([k]) => v.recall[k] = Object.assign({time:'',food:'',portion:'',notes:''}, sv.recall && sv.recall[k]));
+    out.visits[d.k] = v;
+  });
+  return out;
+}
+function numOrNull(x){ return (x === null || x === undefined || x === '') ? null : Number(x); }
+
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (raw){ const d = JSON.parse(raw); if (d && Array.isArray(d.participants)) db = {version:1, participants:d.participants.map(normalise)}; } } catch(e){}
+  try { const u = JSON.parse(localStorage.getItem(UI_KEY) || 'null'); if (u) ui = Object.assign(ui, u); } catch(e){}
+  if (!db.participants.some(p => p.id === ui.sel)) ui.sel = null;
+}
+let saveTimer = null;
+function save(){
+  setSaveState('Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); setSaveState('✓ Saved'); }
+    catch(e){ setSaveState('⚠ Not saved'); toast('Could not save in this browser. Use Export JSON to keep a copy.'); }
+  }, 250);
+}
+function saveUI(){ try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch(e){} }
+function setSaveState(t){ document.getElementById('saveState').textContent = t; }
+
+/* ===================== Helpers ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function nextCode(group){
+  const nums = db.participants.filter(p => p.group === group).map(p => parseInt(String(p.code).replace(/\D/g,''),10)).filter(n => !isNaN(n));
+  const n = (nums.length ? Math.max(...nums) : 0) + 1;
+  return group + '-' + String(n).padStart(2,'0');
+}
+function cur(){ return db.participants.find(p => p.id === ui.sel) || null; }
+function getPath(o, path){ return path.split('.').reduce((a,k) => a == null ? a : a[k], o); }
+function setPath(o, path, val){
+  const ks = path.split('.'); let t = o;
+  for (let i=0;i<ks.length-1;i++) t = t[ks[i]];
+  t[ks[ks.length-1]] = val;
+}
+function sum(arr){ return arr.reduce((a,b)=>a+(b||0),0); }
+function gerdqTotal(v){ return v.gerdq.every(x => x !== null) ? sum(v.gerdq) : null; }
+function gerdqAnswered(v){ return v.gerdq.filter(x => x !== null).length; }
+function triggerTotal(v){ return v.triggers.filter(Boolean).length; }
+function dietDone(v){ return MEALS.some(([k]) => (v.recall[k].food||'').trim()); }
+function surveyTotal(v){ return v.survey.every(x => x !== null) ? sum(v.survey) : null; }
+function surveyAnswered(v){ return v.survey.filter(x => x !== null).length; }
+function triggerScore(v){ return (dietDone(v) || triggerTotal(v) > 0) ? triggerTotal(v) : null; }
+function addDays(iso, n){
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return '';
+  d.setDate(d.getDate() + n); return d.toISOString().slice(0,10);
+}
+function fmtDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso;
+  return d.toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'});
+}
+function scheduled(p, day){ return p.enrolDate ? addDays(p.enrolDate, day.n - 1) : ''; }
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2600); }
+
+/* ===================== Sidebar ===================== */
+function renderSide(){
+  const q = ui.q.trim().toLowerCase();
+  document.querySelectorAll('#filters button').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filter));
+  const list = db.participants
+    .filter(p => ui.filter === 'all' || p.group === ui.filter)
+    .filter(p => !q || [p.code,p.name,p.opNo].join(' ').toLowerCase().includes(q))
+    .sort((a,b) => a.group.localeCompare(b.group) || String(a.code).localeCompare(String(b.code), undefined, {numeric:true}));
+  const el = $('#pList');
+  if (!list.length){
+    el.innerHTML = `<div class="empty-list">${db.participants.length ? 'No participant matches.' : 'No participants yet.<br>Add one with the buttons above.'}</div>`;
+  } else {
+    el.innerHTML = list.map(p => {
+      const prog = DAYS.map(d => {
+        const v = p.visits[d.k];
+        const g = gerdqTotal(v) !== null, di = dietDone(v), s = surveyTotal(v) !== null;
+        return `<span title="${d.label}: GerdQ ${g?'done':'pending'}, Diet ${di?'done':'pending'}, Survey ${s?'done':'pending'}">${d.label.replace('Day ','D')} <i class="dot ${g?'f':''}"></i><i class="dot ${di?'f':''}"></i><i class="dot ${s?'f':''}"></i></span>`;
+      }).join('');
+      return `<button type="button" class="p-item ${p.id===ui.sel && ui.view==='entry'?'on':''}" data-sel="${p.id}">
+        <span class="p-code">${esc(p.code)}</span>
+        <span class="p-name"><span class="badge ${p.group}">${p.group}</span> ${esc(p.name) || '<i>Unnamed</i>'}</span>
+        <span class="p-prog">${prog}</span></button>`;
+    }).join('');
+  }
+  const nA = db.participants.filter(p=>p.group==='A').length, nB = db.participants.filter(p=>p.group==='B').length;
+  const done = db.participants.filter(p => gerdqTotal(p.visits.d60) !== null).length;
+  $('#sideFoot').innerHTML = `
+    <div class="count-row"><span><span class="badge A">A</span> Control</span><b>${nA} / ${TARGET}</b></div>
+    <div class="count-row"><span><span class="badge B">B</span> Intervention</span><b>${nB} / ${TARGET}</b></div>
+    <div class="count-row"><span>Day 60 GerdQ completed</span><b>${done} / ${nA+nB}</b></div>
+    <div>Dots per visit: GerdQ · Diet · Survey</div>`;
+}
+
+/* ===================== Main: entry view ===================== */
+function renderMain(){
+  $('#vEntry').classList.toggle('on', ui.view === 'entry');
+  $('#vSummary').classList.toggle('on', ui.view === 'summary');
+  if (ui.view === 'summary') return renderSummary();
+  const p = cur();
+  if (!p) return renderWelcome();
+  const opt = (val, list) => list.map(o => `<option ${o===val?'selected':''}>${esc(o)}</option>`).join('');
+  $('#main').innerHTML = `
+  <section class="card">
+    <div class="card-h">
+      <span class="badge ${p.group}" style="font-size:13px;padding:3px 10px">${GROUPS[p.group].long}</span>
+      <h2 class="grow">${esc(p.code)} ${p.name ? '· ' + esc(p.name) : ''}</h2>
+      <button class="btn sm no-print" type="button" onclick="window.print()">Print</button>
+      <button class="btn sm danger no-print" type="button" id="delBtn">Delete</button>
+    </div>
+    <div class="card-b">
+      <div class="fields">
+        <div class="fld"><label for="f-code">Participant ID</label><input id="f-code" type="text" data-path="code" value="${esc(p.code)}"></div>
+        <div class="fld"><label for="f-group">Group</label><select id="f-group" data-path="group">
+          <option value="A" ${p.group==='A'?'selected':''}>A · Control</option><option value="B" ${p.group==='B'?'selected':''}>B · Intervention</option></select></div>
+        <div class="fld"><label for="f-name">Name / initials</label><input id="f-name" type="text" data-path="name" value="${esc(p.name)}" autocomplete="off"></div>
+        <div class="fld"><label for="f-age">Age (25–60)</label><input id="f-age" type="number" min="0" max="120" inputmode="numeric" data-path="age" value="${esc(p.age)}"></div>
+        <div class="fld"><label for="f-sex">Sex</label><select id="f-sex" data-path="sex"><option value="">—</option>${opt(p.sex,['Male','Female','Other'])}</select></div>
+        <div class="fld"><label for="f-op">OP / Reg. no.</label><input id="f-op" type="text" data-path="opNo" value="${esc(p.opNo)}"></div>
+        <div class="fld"><label for="f-phone">Phone</label><input id="f-phone" type="tel" data-path="phone" value="${esc(p.phone)}"></div>
+        <div class="fld"><label for="f-enrol">Enrolment date (Day 1)</label><input id="f-enrol" type="date" data-path="enrolDate" value="${esc(p.enrolDate)}"></div>
+        <div class="fld wide"><label for="f-clinic">Study setting</label><select id="f-clinic" data-path="clinic"><option value="">—</option>${opt(p.clinic, CLINICS)}</select></div>
+        <div class="fld wide"><label for="f-remedy">Homoeopathic remedy &amp; potency</label><input id="f-remedy" type="text" data-path="remedy" value="${esc(p.remedy)}"></div>
+      </div>
+    </div>
+  </section>
+  <nav class="tabs" id="tabs" aria-label="Visit"></nav>
+  <div id="visit" class="main"></div>`;
+  renderTabs(); renderVisit();
+}
+
+function renderTabs(){
+  const p = cur(); if (!p) return;
+  $('#tabs').innerHTML = DAYS.map(d => {
+    const v = p.visits[d.k], g = gerdqTotal(v), t = triggerScore(v), s = surveyTotal(v);
+    return `<button type="button" class="tab ${ui.day===d.k?'on':''}" data-day="${d.k}">
+      <b>${d.label}</b><span class="muted small">${d.sub}${v.date ? ' · ' + fmtDate(v.date) : ''}</span>
+      <span class="small"><span>GerdQ <b>${g ?? '–'}</b></span><span>Trig <b>${t ?? '–'}</b></span><span>Survey <b>${s ?? '–'}</b></span></span></button>`;
+  }).join('');
+}
+
+function optRow(path, val, opts, cls){
+  return `<div class="opts ${cls}" role="radiogroup">${opts.map(o =>
+    `<button type="button" class="opt ${val===o.v?'on':''}" role="radio" aria-checked="${val===o.v}" data-path="${path}" data-val="${o.v}" title="${esc(o.t || o.l)}"><span class="l">${o.l}</span><span class="s">${o.s}</span></button>`).join('')}</div>`;
+}
+
+function renderVisit(){
+  const p = cur(); if (!p) return;
+  const day = DAYS.find(d => d.k === ui.day) || DAYS[0];
+  const v = p.visits[day.k], base = `visits.${day.k}`;
+  const sch = scheduled(p, day);
+  let qi = 0;
+  $('#visit').innerHTML = `
+  <section class="card"><div class="card-b visit-date">
+    <div class="fld"><label for="v-date">${day.label} visit date</label><input id="v-date" type="date" data-path="${base}.date" value="${esc(v.date)}"></div>
+    <div class="muted small" style="padding-bottom:8px">${sch ? `Scheduled: <b>${fmtDate(sch)}</b> ${!v.date ? `<button type="button" class="btn sm" data-usedate="${sch}">Use this date</button>` : ''}` : 'Set the enrolment date to see the scheduled date.'}</div>
+  </div></section>
+
+  <section class="card" id="annex1">
+    <div class="card-h"><div class="grow"><div class="annex-tag">Annexure 1</div><h2>Reflux Symptom Tracker (Modified 4GerdQ)</h2></div></div>
+    <div class="card-b">
+      <p class="instr">Check one box for each question based on symptoms experienced over the <b>past 7 days</b>.</p>
+      ${GERDQ.map((q,i) => `<div class="q"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q)}</div>${optRow(`${base}.gerdq.${i}`, v.gerdq[i], GERDQ_OPTS, 'g4')}</div>`).join('')}
+    </div>
+    <div class="total"><span class="lbl">Total score</span><span class="val" data-total="gerdq"></span><span class="rng">range 0–12</span><span class="inc" data-inc="gerdq"></span></div>
+  </section>
+
+  <section class="card" id="annex2">
+    <div class="card-h"><div class="grow"><div class="annex-tag">Annexure 2</div><h2>24-Hour Dietary Recall &amp; Trigger Checklist</h2></div></div>
+    <div class="card-b">
+      <p class="instr">Record all food, drinks and snacks consumed over the immediate past 24 hours. Specify ingredients and estimate portions.</p>
+      <div class="meal-head"><span>Meal / Time</span><span>Food &amp; drink items / specific ingredients</span><span>Portion size</span><span>Cooking details / notes</span></div>
+      <div class="meals">
+      ${MEALS.map(([k,l]) => { const r = v.recall[k], rp = `${base}.recall.${k}`; return `
+        <div class="meal">
+          <div class="meal-h"><b>${l}</b><input type="time" aria-label="${l} time" data-path="${rp}.time" value="${esc(r.time)}"></div>
+          <div class="fld food"><label class="mlabel">Food &amp; drink / ingredients</label><textarea rows="2" aria-label="${l} food and drink" data-path="${rp}.food">${esc(r.food)}</textarea></div>
+          <div class="fld"><label class="mlabel">Portion size</label><input type="text" aria-label="${l} portion" data-path="${rp}.portion" value="${esc(r.portion)}"></div>
+          <div class="fld"><label class="mlabel">Cooking details / notes</label><input type="text" aria-label="${l} notes" data-path="${rp}.notes" value="${esc(r.notes)}"></div>
+        </div>`; }).join('')}
+      </div>
+      <div class="sub-h">Investigator Quantified GERD Trigger Checklist</div>
+      <p class="instr">Score 1 point for each trigger present in the 24-hour recall above.</p>
+      <div class="trig">
+      ${TRIGGERS.map((t,i) => `<label class="${v.triggers[i]?'on':''}"><input type="checkbox" data-path="${base}.triggers.${i}" ${v.triggers[i]?'checked':''}><span><b>${i+1}. ${esc(t.t)}</b><span class="d">${esc(t.d)}</span></span></label>`).join('')}
+      </div>
+    </div>
+    <div class="total"><span class="lbl">Total trigger score</span><span class="val" data-total="trig"></span><span class="rng">range 0–7</span><span class="inc" data-inc="trig"></span></div>
+  </section>
+
+  <section class="card" id="annex3">
+    <div class="card-h"><div class="grow"><div class="annex-tag">Annexure 3</div><h2>Dietary Counseling Impact Survey</h2></div></div>
+    <div class="card-b">
+      ${p.group === 'A' ? `<div class="note">This participant is in the <b>control group</b>. Per the protocol the counseling survey is mainly for the intervention group; fill it only if it was collected.</div>` : ''}
+      <p class="instr">Rate agreement with each statement. 1 = Strongly Disagree · 2 = Disagree · 3 = Neutral · 4 = Agree · 5 = Strongly Agree</p>
+      ${SURVEY.map(s => `<div class="sec-title">${esc(s.sec)}</div>` + s.items.map(it => { const i = qi++; return `<div class="q"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(it)}</div>${optRow(`${base}.survey.${i}`, v.survey[i], LIKERT, 'g5')}</div>`; }).join('')).join('')}
+    </div>
+    <div class="total"><span class="lbl">Total impact score</span><span class="val" data-total="survey"></span><span class="rng">range 7–35</span><span class="inc" data-inc="survey"></span></div>
+  </section>
+
+  <section class="card"><div class="card-b">
+    <div class="fld"><label for="v-rem">${day.label} investigator remarks (aggravations, missed doses, compliance)</label><textarea id="v-rem" rows="3" data-path="${base}.remarks">${esc(v.remarks)}</textarea></div>
+  </div></section>`;
+  refreshTotals();
+}
+
+function refreshTotals(){
+  const p = cur(); if (!p || ui.view !== 'entry') return;
+  const v = p.visits[ui.day]; if (!$('#visit [data-total]')) return;
+  const g = gerdqTotal(v), ga = gerdqAnswered(v);
+  $('[data-total="gerdq"]').textContent = g ?? (ga ? sum(v.gerdq) + '*' : '–');
+  $('[data-inc="gerdq"]').textContent = g === null ? `${ga}/4 answered` : '';
+  const t = triggerScore(v);
+  $('[data-total="trig"]').textContent = t ?? '–';
+  $('[data-inc="trig"]').textContent = t === null ? 'enter the recall or tick triggers' : '';
+  const s = surveyTotal(v), sa = surveyAnswered(v);
+  $('[data-total="survey"]').textContent = s ?? (sa ? sum(v.survey) + '*' : '–');
+  $('[data-inc="survey"]').textContent = s === null ? `${sa}/7 answered` : '';
+}
+
+function renderWelcome(){
+  $('#main').innerHTML = `<section class="card welcome">
+    <h2>Comparative study: nutrition counseling in GERD</h2>
+    <p>Enter the three annexure questionnaires for each participant at Day 1, Day 30 and Day 60. ${TARGET} control and ${TARGET} intervention participants. Everything saves automatically in this browser.</p>
+    <div class="add-row">
+      <button class="btn add-a" type="button" data-add="A">+ Add Control (A)</button>
+      <button class="btn add-b" type="button" data-add="B">+ Add Intervention (B)</button>
+    </div>
+    <div class="steps">
+      <div><b>1 · Add a participant</b>IDs are numbered for you (A-01, B-01 …). Fill in the details and enrolment date.</div>
+      <div><b>2 · Pick the visit</b>Day 1, Day 30 or Day 60. Tap the answers; totals are calculated as you go.</div>
+      <div><b>3 · Export</b>Export Excel gives a workbook with a summary sheet, item-level sheets and group means.</div>
+      <div><b>Keep a backup</b>Data is stored only in this browser, never on a server. Use Export JSON often; Import JSON restores it here or on another device.</div>
+    </div>
+  </section>`;
+}
+
+/* ===================== Summary view ===================== */
+function stats(vals){
+  const x = vals.filter(v => v !== null && v !== undefined);
+  if (!x.length) return {n:0, mean:null, sd:null};
+  const mean = sum(x)/x.length;
+  const sd = x.length > 1 ? Math.sqrt(x.reduce((a,b)=>a+(b-mean)**2,0)/(x.length-1)) : null;
+  return {n:x.length, mean, sd};
+}
+const f2 = x => x === null || x === undefined ? '' : (Math.round(x*100)/100).toFixed(2);
+function measureRows(){
+  return [
+    ['GerdQ total (0–12)', v => gerdqTotal(v)],
+    ['Trigger score (0–7)', v => triggerScore(v)],
+    ['Counseling impact (7–35)', v => surveyTotal(v)]
+  ];
+}
+function groupMeans(){
+  const rows = [];
+  measureRows().forEach(([lbl, fn]) => DAYS.forEach(d => {
+    const r = {measure:lbl, day:d.label};
+    ['A','B'].forEach(g => r[g] = stats(db.participants.filter(p => p.group===g).map(p => fn(p.visits[d.k]))));
+    rows.push(r);
+  }));
+  return rows;
+}
+function renderSummary(){
+  const ps = [...db.participants].sort((a,b) => a.group.localeCompare(b.group) || String(a.code).localeCompare(String(b.code), undefined, {numeric:true}));
+  const gm = groupMeans();
+  const cell = s => s.n ? `${f2(s.mean)}${s.sd!==null ? ' ± ' + f2(s.sd) : ''} <span class="muted">(n=${s.n})</span>` : '<span class="muted">–</span>';
+  const meansHtml = measureRows().map(([lbl]) => `<div class="mcard"><h3>${lbl}</h3><table><thead><tr><th></th><th class="n">Control (A)</th><th class="n">Intervention (B)</th></tr></thead><tbody>
+    ${gm.filter(r => r.measure === lbl).map(r => `<tr><td>${r.day}</td><td class="n">${cell(r.A)}</td><td class="n">${cell(r.B)}</td></tr>`).join('')}</tbody></table></div>`).join('');
+  const d = (a,b) => (a===null||b===null) ? '' : (a-b);
+  $('#main').innerHTML = `<section class="card">
+    <div class="card-h"><h2 class="grow">Summary</h2><span class="muted small">Mean ± SD · click a row to open the participant</span></div>
+    <div class="card-b">
+      <div class="means">${meansHtml}</div>
+      ${ps.length ? `<div class="tbl-wrap"><table><thead><tr>
+        <th>ID</th><th>Group</th><th>Name</th><th class="n">Age</th><th>Sex</th>
+        <th class="n">GerdQ D1</th><th class="n">D30</th><th class="n">D60</th><th class="n">Δ D1→D60</th>
+        <th class="n">Trig D1</th><th class="n">D30</th><th class="n">D60</th>
+        <th class="n">Survey D1</th><th class="n">D30</th><th class="n">D60</th></tr></thead><tbody>
+        ${ps.map(p => { const V = p.visits, g = DAYS.map(x => gerdqTotal(V[x.k])), t = DAYS.map(x => triggerScore(V[x.k])), s = DAYS.map(x => surveyTotal(V[x.k]));
+          return `<tr class="click" data-open="${p.id}"><td><b>${esc(p.code)}</b></td><td><span class="badge ${p.group}">${GROUPS[p.group].name}</span></td><td>${esc(p.name)}</td><td class="n">${esc(p.age)}</td><td>${esc(p.sex)}</td>
+          ${g.map(x=>`<td class="n">${x??''}</td>`).join('')}<td class="n">${d(g[0],g[2])}</td>
+          ${t.map(x=>`<td class="n">${x??''}</td>`).join('')}${s.map(x=>`<td class="n">${x??''}</td>`).join('')}</tr>`; }).join('')}
+      </tbody></table></div>` : '<p class="muted">No participants yet.</p>'}
+    </div></section>`;
+}
+
+/* ===================== Excel export ===================== */
+function blank(x){ return x === null || x === undefined ? '' : x; }
+function buildSheets(){
+  const ps = [...db.participants].sort((a,b) => a.group.localeCompare(b.group) || String(a.code).localeCompare(String(b.code), undefined, {numeric:true}));
+  const info = p => [p.code, p.group, GROUPS[p.group].name];
+
+  // 1. Summary (wide: one row per participant)
+  const sh = ['Participant ID','Group','Group name','Name','Age','Sex','OP / Reg no','Phone','Study setting','Enrolment date','Remedy & potency'];
+  DAYS.forEach(d => sh.push(`${d.label} visit date`));
+  DAYS.forEach(d => sh.push(`GerdQ ${d.label}`));
+  sh.push('GerdQ change D1-D30','GerdQ change D1-D60');
+  DAYS.forEach(d => sh.push(`Trigger score ${d.label}`));
+  sh.push('Trigger change D1-D60');
+  DAYS.forEach(d => sh.push(`Counseling survey ${d.label}`));
+  sh.push('Survey change D60-D1','Notes');
+  const summary = [sh, ...ps.map(p => {
+    const V = p.visits, g = DAYS.map(d => gerdqTotal(V[d.k])), t = DAYS.map(d => triggerScore(V[d.k])), s = DAYS.map(d => surveyTotal(V[d.k]));
+    const df = (a,b) => (a===null||b===null) ? '' : a-b;
+    return [...info(p), p.name, p.age === '' ? '' : Number(p.age), p.sex, p.opNo, p.phone, p.clinic, p.enrolDate, p.remedy,
+      ...DAYS.map(d => V[d.k].date), ...g.map(blank), df(g[0],g[1]), df(g[0],g[2]),
+      ...t.map(blank), df(t[0],t[2]), ...s.map(blank), df(s[2],s[0]), p.notes];
+  })];
+
+  // 2. GerdQ items (long)
+  const gq = [['Participant ID','Group','Group name','Visit','Visit date', ...GERDQ_SHORT.map((s,i)=>`Q${i+1} ${s}`), 'Total (0-12)', 'Complete']];
+  // 3. Diet recall (long)
+  const dr = [['Participant ID','Group','Group name','Visit','Visit date','Meal','Time','Food & drink / ingredients','Portion size','Cooking details / notes']];
+  // 4. Triggers
+  const tr = [['Participant ID','Group','Group name','Visit','Visit date', ...TRIGGERS.map((t,i)=>`T${i+1} ${t.t}`), 'Total trigger score (0-7)']];
+  // 5. Survey
+  const sv = [['Participant ID','Group','Group name','Visit','Visit date', ...SURVEY_FLAT.map((_,i)=>`Item ${i+1}`), 'Literacy (A, 3-15)','Self-efficacy (B, 3-15)','Perceived value (C, 1-5)','Total (7-35)','Complete']];
+  // 6. Remarks
+  const rm = [['Participant ID','Group','Group name','Visit','Visit date','Investigator remarks']];
+
+  ps.forEach(p => DAYS.forEach(d => {
+    const v = p.visits[d.k], pre = [...info(p), d.label, v.date];
+    gq.push([...pre, ...v.gerdq.map(blank), blank(gerdqTotal(v)), gerdqTotal(v) !== null ? 'Yes' : 'No']);
+    MEALS.forEach(([k,l]) => { const r = v.recall[k]; if (r.time || r.food || r.portion || r.notes) dr.push([...pre, l, r.time, r.food, r.portion, r.notes]); });
+    tr.push([...pre, ...v.triggers.map(x => x ? 1 : 0), blank(triggerScore(v))]);
+    const part = (a,b) => v.survey.slice(a,b).every(x=>x!==null) ? sum(v.survey.slice(a,b)) : '';
+    sv.push([...pre, ...v.survey.map(blank), part(0,3), part(3,6), part(6,7), blank(surveyTotal(v)), surveyTotal(v) !== null ? 'Yes' : 'No']);
+    if (v.remarks) rm.push([...pre, v.remarks]);
+  }));
+
+  // 7. Group means
+  const gmRows = [['Measure','Visit','Control n','Control mean','Control SD','Intervention n','Intervention mean','Intervention SD']];
+  groupMeans().forEach(r => gmRows.push([r.measure, r.day, r.A.n, r.A.mean===null?'':+f2(r.A.mean), r.A.sd===null?'':+f2(r.A.sd), r.B.n, r.B.mean===null?'':+f2(r.B.mean), r.B.sd===null?'':+f2(r.B.sd)]));
+
+  return [['Summary',summary],['GerdQ (Annex 1)',gq],['Diet Recall (Annex 2)',dr],['Triggers (Annex 2)',tr],['Counseling Survey (Annex 3)',sv],['Remarks',rm],['Group Means',gmRows]];
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+function exportXlsx(){
+  if (!db.participants.length) return toast('Add a participant first.');
+  const sheets = buildSheets();
+  if (typeof XLSX === 'undefined'){
+    // Offline fallback: CSV of the summary sheet
+    const csv = sheets[0][1].map(r => r.map(c => { const s = String(c ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }).join(',')).join('\r\n');
+    download(new Blob(['﻿' + csv], {type:'text/csv'}), `GERD_study_summary_${today()}.csv`);
+    return toast('Excel library not loaded (offline?). Downloaded the summary as CSV instead.');
+  }
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(([name, rows]) => {
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = rows[0].map((h,i) => ({wch: Math.min(48, Math.max(String(h).length + 2, ...rows.slice(1).map(r => String(r[i] ?? '').length + 1), 8))}));
+    ws['!freeze'] = {xSplit:1, ySplit:1};
+    XLSX.utils.book_append_sheet(wb, ws, name.slice(0,31));
+  });
+  XLSX.writeFile(wb, `GERD_study_${today()}.xlsx`);
+  toast('Excel file downloaded.');
+}
+function download(blob, name){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ===================== Events ===================== */
+function addParticipant(group){
+  const n = db.participants.filter(p => p.group === group).length;
+  if (n >= TARGET && !confirm(`${GROUPS[group].name} group already has ${n} participants (target ${TARGET}). Add another?`)) return;
+  const p = blankParticipant(group);
+  db.participants.push(p);
+  ui.sel = p.id; ui.day = 'd1'; ui.view = 'entry';
+  save(); saveUI(); renderSide(); renderMain();
+  setTimeout(() => { const el = document.getElementById('f-name'); if (el) el.focus(); }, 0);
+}
+function touch(p){ p.updatedAt = Date.now(); }
+
+document.addEventListener('click', e => {
+  const add = e.target.closest('[data-add]'); if (add) return addParticipant(add.dataset.add);
+  const sel = e.target.closest('[data-sel]');
+  if (sel){ ui.sel = sel.dataset.sel; ui.view = 'entry'; saveUI(); renderSide(); renderMain(); if (window.innerWidth <= 860) $('#main').scrollIntoView({behavior:'smooth'}); return; }
+  const open = e.target.closest('[data-open]');
+  if (open){ ui.sel = open.dataset.open; ui.view = 'entry'; saveUI(); renderSide(); renderMain(); window.scrollTo(0,0); return; }
+  const f = e.target.closest('#filters [data-f]'); if (f){ ui.filter = f.dataset.f; saveUI(); renderSide(); return; }
+  const tab = e.target.closest('[data-day]');
+  if (tab){ ui.day = tab.dataset.day; saveUI(); renderTabs(); renderVisit(); return; }
+  const ud = e.target.closest('[data-usedate]');
+  if (ud){ const p = cur(); setPath(p, `visits.${ui.day}.date`, ud.dataset.usedate); touch(p); save(); renderTabs(); renderVisit(); return; }
+  const o = e.target.closest('.opt[data-path]');
+  if (o){
+    const p = cur(); const val = Number(o.dataset.val);
+    const now = getPath(p, o.dataset.path) === val ? null : val;
+    setPath(p, o.dataset.path, now); touch(p); save();
+    o.parentElement.querySelectorAll('.opt').forEach(b => { const on = Number(b.dataset.val) === now; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    refreshTotals(); renderTabs(); renderSide();
+    return;
+  }
+  if (e.target.id === 'delBtn'){
+    const p = cur();
+    if (confirm(`Delete ${p.code}${p.name ? ' (' + p.name + ')' : ''} and all their visit data? This cannot be undone.`)){
+      db.participants = db.participants.filter(x => x.id !== p.id); ui.sel = null; save(); saveUI(); renderSide(); renderMain(); toast('Participant deleted.');
+    }
+  }
+});
+
+function onField(e){
+  const el = e.target; if (!el.dataset || !el.dataset.path || el.classList.contains('opt')) return;
+  const p = cur(); if (!p) return;
+  const path = el.dataset.path;
+  const val = el.type === 'checkbox' ? el.checked : el.value;
+  if (path === 'group' && val !== p.group){
+    p.group = val;
+    if (/^[AB]-/.test(p.code)) { const old = p.code; p.code = '__'; p.code = nextCode(val); toast(`${old} moved to ${GROUPS[val].name}: now ${p.code}`); }
+    touch(p); save(); renderSide(); renderMain(); return;
+  }
+  setPath(p, path, val); touch(p); save();
+  if (el.type === 'checkbox') el.closest('label').classList.toggle('on', el.checked);
+  if (path === 'name' || path === 'code'){ const h = $('.card-h h2'); if (h) h.textContent = p.code + (p.name ? ' · ' + p.name : ''); }
+  if (path === 'enrolDate' && e.type === 'change') renderVisit();
+  if (/\.date$/.test(path) || el.type === 'checkbox' || /\.food$/.test(path)) { refreshTotals(); renderTabs(); }
+  if (/^(name|code|opNo)$/.test(path) || /\.food$/.test(path) || el.type === 'checkbox') renderSide();
+}
+$('#main').addEventListener('input', onField);
+$('#main').addEventListener('change', e => { if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'date') onField(e); });
+
+$('#search').addEventListener('input', e => { ui.q = e.target.value; renderSide(); });
+$('#vEntry').addEventListener('click', () => { ui.view = 'entry'; saveUI(); renderSide(); renderMain(); });
+$('#vSummary').addEventListener('click', () => { ui.view = 'summary'; saveUI(); renderSide(); renderMain(); });
+$('#exportXlsx').addEventListener('click', exportXlsx);
+$('#backupBtn').addEventListener('click', () => {
+  download(new Blob([JSON.stringify({app:'gerd-study', exportedAt:new Date().toISOString(), ...db}, null, 1)], {type:'application/json'}), `GERD_study_data_${today()}.json`);
+  toast('JSON file downloaded.');
+});
+$('#restoreBtn').addEventListener('click', () => $('#restoreFile').click());
+$('#restoreFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!d || !Array.isArray(d.participants)) throw new Error('not a backup');
+    let added = 0, updated = 0;
+    d.participants.map(normalise).forEach(np => {
+      const i = db.participants.findIndex(p => p.id === np.id);
+      if (i < 0){ db.participants.push(np); added++; }
+      else if ((np.updatedAt||0) > (db.participants[i].updatedAt||0)){ db.participants[i] = np; updated++; }
+    });
+    save(); renderSide(); renderMain();
+    toast(`Imported: ${added} added, ${updated} updated.`);
+  } catch(err){ toast('That file is not a JSON export from this form.'); }
+});
+window.addEventListener('beforeunload', () => { clearTimeout(saveTimer); try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e){} });
+
+/* ===================== Start ===================== */
+load();
+$('#search').value = ui.q;
+renderSide(); renderMain();
+setSaveState(db.participants.length ? '✓ Saved' : '');
+</script>
+</body>
+</html>
